@@ -1,0 +1,16 @@
+{
+  "name": "arbox-membership",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Talor Samara",
+  "license": "",
+  "dependencies": {
+    "uuid": "^8.3.2",
+    "xlsx": "^0.17.1",
+    "yargs": "^17.1.1"
+  }
+}
