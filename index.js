@@ -1,28 +1,32 @@
-const { v4: uuidv4 } = require('uuid');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const argv = yargs(hideBin(process.argv)).argv;
 const fileReader = require('./DAL/fileReader');
 
-//tables name
+//Tables name
 const USERS_TABLE = "users";
 const MEMBERSHIPS_TABLE = "memberships";
-//column that stores the id (primary key) in the excel sheets
+
+//Column that stores the id (primary key) in each excel sheets
 const ID_COL = 'A';
 
 try {
+    //checks if we've received 3 parameters 
     if (!argv.fileClub || !argv.fileDb || !argv.clubId)
         throw new Error("Usage: --file-db=<path> --file-club=<path> --club-id=<id>");
-
+    
+    //reading xlsx 
     const workbookClub = fileReader.readDataFromXlsxFile(argv.fileClub);
     const workbookDB = fileReader.readDataFromXlsxFile(argv.fileDb);
 
+    //get max id of each arbox db table
     let maxUserId;
     let maxMemberId;
     Object.values(workbookDB.Sheets).forEach((worksheet, index) => {
         index === 0 ? maxUserId = getMaxId(worksheet, ID_COL) : maxMemberId = getMaxId(worksheet, ID_COL);
     });
 
+    //iterate over club's workbook and create the data for the query
     Object.values(workbookClub.Sheets).forEach(worksheet => {
         const users = [];
         const members = [];
@@ -46,16 +50,31 @@ try {
     console.error(error.message);
 }
 
-function getMaxId(worksheet, str) {
-    const regex = new RegExp(`^${str}\\d+`, "g");
+/*
+get max id of each worksheet based on column
+@param worksheet - the current worksheet (table)
+@param col - the column that stores the id values
+*/
+function getMaxId(worksheet, col) {
+    const regex = new RegExp(`^${col}\\d+`, "g");
     const arr = Object.keys(worksheet).filter(x => regex.test(x)).map(x => worksheet[x].v).filter(x => /[0-9]/.test(x));
     return Math.max.apply(null, arr) + 1;
 }
 
+/*
+Checks if the woorksheet does not contains email duplicates
+@param arr - list of emails
+*/
 function uniqueEmails(arr) {
     return (new Set(arr)).size === arr.length;
 }
 
+/*
+Data shapping for users table
+@param row - the current row in json object of the woorksheet
+@param maxUserId - the current max user id (primaky key) in users table
+@param clubId - the club id in the internal systems
+*/
 function setUsers(row, maxUserId, clubId) {
     const user = {};
     user.id = maxUserId;
@@ -67,7 +86,12 @@ function setUsers(row, maxUserId, clubId) {
     user.club_id = clubId;
     return user;
 }
-
+/*
+Data shapping for memberships table
+@param row - the current row in json object of the woorksheet
+@param maxUserId - the current max user id (primaky key) in users table
+@param maxMemberId - the current max membership id (primaky key) in memberships table
+*/
 function setMemberships(row, maxUserId, maxMemberId) {
     const member = {};
     member.id = maxMemberId;
@@ -78,14 +102,14 @@ function setMemberships(row, maxUserId, maxMemberId) {
     return member;
 }
 
+/*
+Creates the query that inserts to the db
+@param arr - list of table columns and their values
+@param dbName - the db name we insert values
+*/
 function createQuery(arr, dbName) {
     arr.forEach(obj => {
         console.log(`INSERT INTO [ar_db].[${dbName}] (${Object.keys(obj)}) VALUES (${Object.values(obj)});`);
     });
 }
 
-function generateUniqueID() {
-    const id = uuidv4();
-    console.log(id);
-    console.log(Math.floor(Math.random() * 100));
-};
