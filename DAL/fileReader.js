@@ -5,7 +5,7 @@ reading data from xlsx file using module 'xlsx'
 @param xlsxFilePath - the file path
 */
 exports.readDataFromXlsxFile = function (xlsxFilePath) {
-    return xlsx.readFile(xlsxFilePath,{type:'binary',cellDates:true,cellNF: false,cellText:false});
+    return xlsx.readFile(xlsxFilePath,{type:'binary',cellDates:true,cellNF:false,cellText:false});
 }
 
 /*
